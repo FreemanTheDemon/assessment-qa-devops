@@ -4,13 +4,36 @@ const app = express()
 const {bots, playerRecord} = require('./data')
 const {shuffleArray} = require('./utils')
 
+var Rollbar = require('rollbar');
+var rollbar = new Rollbar({
+  accessToken: 'aaeb7ecea6eb4cb99af0cb43a8a3c12a',
+  captureUncaught: true,
+  captureUnhandledRejections: true,
+});
+
 app.use(express.json())
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '/public/index.html'));
+    rollbar.info('HTML file served');
+});
+
+app.get('/styles', (req, res) => {
+    res.sendFile(path.join(__dirname, '/public/index.css'));
+    rollbar.info('CSS file served');
+});
+
+app.get('/js', (req, res) => {
+    res.sendFile(path.join(__dirname, '/public/index.js'));
+    rollbar.info('JS file served');
+});
 
 app.get('/api/robots', (req, res) => {
     try {
         res.status(200).send(botsArr)
     } catch (error) {
         console.log('ERROR GETTING BOTS', error)
+        rollbar.error('ERROR GETTING BOTS');
         res.sendStatus(400)
     }
 })
@@ -23,6 +46,7 @@ app.get('/api/robots/five', (req, res) => {
         res.status(200).send({choices, compDuo})
     } catch (error) {
         console.log('ERROR GETTING FIVE BOTS', error)
+        rollbar.error('ERROR GETTING FIVE BOTS');
         res.sendStatus(400)
     }
 })
@@ -54,6 +78,7 @@ app.post('/api/duel', (req, res) => {
         }
     } catch (error) {
         console.log('ERROR DUELING', error)
+        rollbar.error('ERROR DUELING');
         res.sendStatus(400)
     }
 })
@@ -63,9 +88,12 @@ app.get('/api/player', (req, res) => {
         res.status(200).send(playerRecord)
     } catch (error) {
         console.log('ERROR GETTING PLAYER STATS', error)
+        rollbar.error('ERROR GETTING PLAYER STATS');
         res.sendStatus(400)
     }
 })
+
+app.use(rollbar.errorHandler());
 
 const port = process.env.PORT || 3000
 
